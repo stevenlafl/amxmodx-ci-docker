@@ -1,0 +1,19 @@
+name: Compile AMX Mod X plugins
+description: Compile .sma files with the latest AMX Mod X release into compiled/
+inputs:
+  paths:
+    description: Space-separated directories (searched recursively) and .sma files. include/ folders found under them are added as include paths.
+    default: .
+  jobs:
+    description: Number of parallel compiles. Defaults to all CPUs.
+    default: ''
+runs:
+  using: docker
+  image: docker://ghcr.io/stevenlafl/amxmodx-ci:latest
+  entrypoint: bash
+  env:
+    COMPILE_PATHS: ${{ inputs.paths }}
+    JOBS: ${{ inputs.jobs }}
+  args:
+    - -c
+    - exec compile.sh $COMPILE_PATHS

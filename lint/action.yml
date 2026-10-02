@@ -1,0 +1,41 @@
+name: Lint AMX Mod X plugins
+description: Report compiler warnings, removable includes, load-time requirements and unused natives for .sma files
+inputs:
+  paths:
+    description: Space-separated directories (searched recursively) and .sma files. include/ folders found under them are added as include paths.
+    default: .
+  plugins-ini:
+    description: Space-separated plugins.ini files to check load-time requirements against.
+    default: ''
+  baseline:
+    description: JSON file of per-plugin warning counts; increases are reported as regressions.
+    default: ''
+  includes:
+    description: Set to false to skip the removable-include check (one recompile per include).
+    default: 'true'
+  strict:
+    description: Set to true to fail on compile errors, warning regressions or unresolved requirements.
+    default: 'false'
+  jobs:
+    description: Number of parallel compiles. Defaults to all CPUs.
+    default: ''
+runs:
+  using: docker
+  image: docker://ghcr.io/stevenlafl/amxmodx-ci:latest
+  entrypoint: bash
+  env:
+    LINT_PATHS: ${{ inputs.paths }}
+    LINT_PLUGINS_INI: ${{ inputs.plugins-ini }}
+    LINT_BASELINE: ${{ inputs.baseline }}
+    LINT_INCLUDES: ${{ inputs.includes }}
+    LINT_STRICT: ${{ inputs.strict }}
+    JOBS: ${{ inputs.jobs }}
+  args:
+    - -c
+    - |
+      set --
+      for f in $LINT_PLUGINS_INI; do set -- "$@" --plugins-ini "$f"; done
+      [ -n "$LINT_BASELINE" ] && set -- "$@" --baseline "$LINT_BASELINE"
+      [ "$LINT_INCLUDES" = false ] && set -- "$@" --no-includes
+      [ "$LINT_STRICT" = true ] && set -- "$@" --strict
+      exec lint.sh "$@" $LINT_PATHS
